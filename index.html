@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>يوطيوب</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    text-align: center;
+    margin-top: 20px;
+    color: #007bff;
+  }
+  #searchContainer {
+    text-align: center;
+    margin-top: 20px;
+  }
+  #searchQuery {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: #333;
+    color: #fff;
+    margin-right: 10px;
+  }
+  #results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .video-container {
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #444;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 300px;
+  }
+  .video-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .video-container h3 {
+    color: #007bff;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .video-container img {
+    width: 100%;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  .video-container p {
+    color: #ccc;
+    font-size: 14px;
+  }
+  .video-player {
+    width: 100%;
+    height: 56.25vw;
+    max-height: 70vh;
+  }
+  #backButton {
+    display: none;
+    position: fixed;
+    bottom: 55px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #search {
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 5px;
+    border: none;
+  }
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #2f2f2f;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<h1>يوطيوب</h1>
+<div id="searchContainer">
+  <input type="text" id="searchQuery" placeholder="البحث في يوطيوب">
+  <button id="search" onclick="searchVideos()">بحث</button>
+</div>
+<div id="results"></div>
+<button id="backButton" onclick="goBack()">رجوع للبحث</button>
+
+<div class="footer">
+<a href="https://coderinventor.github.io/social/" style="color: #ff0000; text-decoration: none;">coder inventor</a> تم صنع الصفحة من قبل 
+</div>
+<script>
+var currentVideoPlayer = null;
+
+function searchVideos() {
+  var query = document.getElementById("searchQuery").value;
+  var apiKey = "AIzaSyApFg4t8RUKVHjeXl3VUFJMVT-V1WuaiHM";
+  var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=" + query + "&key=" + apiKey;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      data.items.forEach(item => {
+        var videoId = item.id.videoId;
+        var title = item.snippet.title;
+        var thumbnail = item.snippet.thumbnails.medium.url;
+        var publishedAt = item.snippet.publishedAt;
+        var videoUrl = "https://www.youtube.com/embed/" + videoId;
+
+        var resultDiv = document.createElement("div");
+        resultDiv.classList.add("video-container");
+        var timeDiff = getTimeDifference(publishedAt);
+        resultDiv.innerHTML = `
+          <h3>${title}</h3>
+          <p>${timeDiff}</p>
+          <img src="${thumbnail}" onclick="playVideo('${videoUrl}')">
+          <p style="color: blue;">${videoId}</p>
+        `;
+        document.getElementById("results").appendChild(resultDiv);
+      });
+    })
+    .catch(error => console.log(error));
+}
+
+function playVideo(videoUrl) {
+  if (currentVideoPlayer !== null) {
+    currentVideoPlayer.remove();
+  }
+  
+  var videoPlayer = document.createElement("iframe");
+  videoPlayer.className = "video-player";
+  videoPlayer.src = videoUrl;
+  videoPlayer.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+  videoPlayer.setAttribute("allowfullscreen", "");
+  currentVideoPlayer = videoPlayer;
+
+  document.getElementById("searchContainer").style.display = "none";
+  document.getElementById("backButton").style.display = "block";
+  
+  document.getElementById("results").innerHTML = "";
+  document.body.appendChild(videoPlayer);
+}
+
+function goBack() {
+  if (currentVideoPlayer !== null) {
+    currentVideoPlayer.remove();
+    currentVideoPlayer = null;
+  }
+  
+  document.getElementById("searchContainer").style.display = "block";
+  document.getElementById("backButton").style.display = "none";
+}
+
+function getTimeDifference(publishedAt) {
+  var currentTime = new Date();
+  var publishedTime = new Date(publishedAt);
+  var diff = Math.abs(currentTime - publishedTime);
+  var diffSeconds = Math.floor(diff / 1000);
+  if (diffSeconds < 60) {
+    return "نشر قبل: " + diffSeconds + " ثانية";
+  }
+  var diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return "نشر قبل: " + diffMinutes + " دقيقة";
+  }
+  var diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return "نشر قبل: " + diffHours + " ساعة";
+  }
+  var diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) {
+    return "نشر قبل: " + diffDays + " يوم";
+  }
+  var diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) {
+    return "نشر قبل: " + diffMonths + " شهر";
+  }
+  var diffYears = Math.floor(diffMonths / 12);
+  return "نشر قبل: " + diffYears + " سنة";
+}
+</script>
+</body>
+</html>
+
